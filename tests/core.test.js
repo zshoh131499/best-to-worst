@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {evaluate,swap,outcome,totals,shuffle} from '../dist/core.js';
+const cards=['a','b','c','d','e'];
+test('all matching cards score for the team and calibrated confidence gives 100',()=>{const r=evaluate(cards,cards,100,100);assert.equal(r.hits,5);assert.equal(r.misses,0);assert.equal(r.index,100);});
+test('no exact positions scores five for the game; confidence does not change victory points',()=>{const r=evaluate(cards,['b','c','d','e','a'],0,0);assert.equal(r.hits,0);assert.equal(r.misses,5);assert.equal(r.index,60);assert.equal(evaluate(cards,['b','c','d','e','a'],100,100).index,0);});
+test('40/60 split scores real accuracy and both confidence forecasts',()=>{const r=evaluate(cards,['a','b','d','e','c'],40,80);assert.equal(r.hits,2);assert.equal(r.calibration,.8);assert.equal(r.index,64);});
+test('reordering preserves a unique permutation, including boundary clicks',()=>{assert.deepEqual(swap(cards,0,1),['b','a','c','d','e']);assert.deepEqual(swap(cards,0,-1),cards);assert.deepEqual(shuffle(cards,()=>.5).sort(),cards);});
+test('every player gets a turn, ties continue, overtime resolves to a shared outcome',()=>{const win={hits:5,misses:0},lose={hits:0,misses:5};assert.equal(outcome([win],2),'continue');assert.equal(outcome([win,lose],2),'overtime');assert.equal(outcome([win,lose,win],2),'win');assert.equal(outcome([win,lose,lose],2),'lose');assert.deepEqual(totals([win,lose,win]),{team:10,game:5});});
+test('invalid ranks and confidence cannot be scored',()=>{assert.throws(()=>evaluate(cards,['a','a','b','c','d'],60,60));assert.throws(()=>evaluate(cards,cards,101,60));assert.throws(()=>evaluate(cards,cards,NaN,60));});
+test('all 120 permutations preserve the five-point budget',()=>{function permute(a){return a.length?a.flatMap((x,i)=>permute(a.filter((_,j)=>j!==i)).map(p=>[x,...p])):[[]];}for(const p of permute(cards)){const r=evaluate(cards,p,60,60);assert.equal(r.hits+r.misses,5);assert.ok(r.index>=0&&r.index<=100);}});
