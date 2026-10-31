@@ -1,4 +1,4 @@
-# Best to Worst — All Together
+# Best to Worst
 
 A cooperative, pass-and-play party game for 2–8 people, built with Three.js r170. Everyone shares one device and one team score. No account, server, or online multiplayer room is required.
 
@@ -20,7 +20,9 @@ Both sides predict the team's match rate. With predictions p and q and actual ma
 
 - Three.js paper cards, shadows, animated reordering, and individual reveals.
 - Flat-card fallback when WebGL cannot initialize.
-- Four English topic packs plus custom topics.
+- Six selectable English categories with 120 unique cards, plus custom cards.
+- Rotate one category per round or mix selected categories. Preview each category before playing.
+- Cards are drawn without repeats until the relevant pool is exhausted. Existing saved games remain playable.
 - Private handoff screens and automatic shielding when the tab is hidden.
 - Browser-local progress and a resume button.
 - Optional turn timer: off, 60, 90 (default), or 120 seconds for each ranking and guessing phase. Pause/resume and add 30 seconds. Expiry is advisory, never an automatic submission or penalty. The countdown pauses when leaving the tab.
@@ -35,6 +37,6 @@ The handoff screen is a party etiquette aid, not an anti-cheat security boundary
 - `dist/app.js`: game flow, storage, and accessible HTML controls.
 - `dist/table.js`: Three.js cards, textures, and animation.
 - `dist/style.css`: responsive layout and styling.
-- `tests/core.test.js`: eleven tests, including all 120 possible permutations.
+- `tests/`: 17 tests covering scoring, all 120 possible permutations, timers, category rotation, mixed draws, and repeat avoidance.
 
 Three.js is vendored locally with its MIT license. No remote CDN or font request is needed. Installation reference: https://threejs.org/manual/pages/installation.html
