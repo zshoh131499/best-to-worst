@@ -20,6 +20,7 @@ Both sides predict the team's match rate. With predictions p and q and actual ma
 
 - Three.js paper cards, shadows, animated reordering, and individual reveals.
 - Flat-card fallback when WebGL cannot initialize.
+- Default category draw each round: a Three.js packet cut, fan, and flip reveals a category. Accept it or choose another; skip animation is available. Reduced motion reveals immediately. The timer starts only when ranking begins.
 - Six selectable English categories with 120 unique cards, plus custom cards.
 - Rotate one category per round or mix selected categories. Preview each category before playing.
 - Cards are drawn without repeats until the relevant pool is exhausted. Existing saved games remain playable.

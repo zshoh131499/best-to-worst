@@ -7,3 +7,16 @@ test('mixed mode draws only selected categories and balances them',()=>{const po
 test('no repeats before a category is exhausted',()=>{const pools=makePools(['food']);let state={pools},all=[];for(let i=0;i<4;i++){const r=drawRound(state);all.push(...r.cards);state={...state,...r};}assert.equal(new Set(all).size,20);assert.equal(drawRound(state).cards.length,5);});
 test('partial cycles use the last unseen cards before recycling',()=>{const pools=makePools(['custom'],['A','B','C','D','E','F','G']);const first=drawRound({pools},()=>.5);const second=drawRound({pools,used:first.used},()=>.5);const unseen=pools[0].cards.filter(x=>!first.cards.includes(x));assert.ok(unseen.every(x=>second.cards.includes(x)));assert.equal(new Set(second.cards).size,5);});
 test('custom deduplication is case-insensitive and mixed overlaps never duplicate a card',()=>{assert.deepEqual(customCards(' Coffee \ncoffee\nTea\n'),['coffee','Tea']);const pools=makePools(['food','custom'],['Hot pot','PIZZA','A','B','C']);const r=drawRound({pools,mode:'mixed'});assert.equal(new Set(r.cards.map(x=>x.toLowerCase())).size,5);assert.throws(()=>drawRound({pools:[]}));});
+
+test('category proposals rotate without consuming topics and manual overrides preserve the rejected category',async()=>{
+ const {proposeCategory}=await import('../dist/categories.js');
+ const pools=makePools(['food','travel','habits']);
+ const snapshot=JSON.stringify(pools);
+ const proposed=proposeCategory(pools,['food','travel','habits']);
+ assert.equal(proposed.id,'food');
+ const chosen=proposeCategory(pools,proposed.before,'travel');
+ assert.deepEqual(chosen.after,['food','habits']);
+ assert.equal(JSON.stringify(pools),snapshot);
+ assert.equal(proposeCategory(pools,chosen.after).id,'food');
+ assert.throws(()=>proposeCategory(pools,[],'invalid'));
+});

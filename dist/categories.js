@@ -13,6 +13,16 @@ export function customCards(text){return [...new Map(text.split('\n').map(s=>s.t
 export function makePools(ids,custom=[]){const pools=CATEGORIES.filter(c=>ids.includes(c.id)).map(c=>({...c,cards:[...c.cards]}));if(ids.includes('custom'))pools.push({id:'custom',name:'Custom cards',description:'Your own topics.',cards:custom});return pools;}
 export function poolSize(pools){return new Set(pools.flatMap(p=>p.cards.map(cardKey))).size;}
 
+// A proposed category does not consume any topic cards. Commit this queue only on acceptance.
+export function proposeCategory(pools,queue=[],chosenId=null,random=Math.random){
+ if(!pools.length)throw new Error('Select at least one category.');
+ let before=[...new Set(queue.filter(id=>pools.some(p=>p.id===id)))];
+ if(!before.length)before=shuffle(pools.map(p=>p.id),random);
+ const id=chosenId??before[0];
+ if(!pools.some(p=>p.id===id))throw new Error('Unknown category.');
+ return {id,before,after:before.filter(x=>x!==id),revealed:false};
+}
+
 // Consume unseen cards first. A cycle resets only when its available pool is exhausted.
 export function drawRound({pools,mode='category',used=[],categoryQueue=[]},random=Math.random){
  if(!pools.length||pools.some(p=>new Set(p.cards.map(cardKey)).size<5))throw new Error('Each selected category needs at least five different cards.');
