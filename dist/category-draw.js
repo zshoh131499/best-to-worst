@@ -1,3 +1,4 @@
+import {categoryArt} from './category-art.js';
 import * as THREE from './vendor/three.module.js';
 
 const ease=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
@@ -18,7 +19,7 @@ export function createCategoryDraw(host,category,{revealed=false,onComplete=()=>
  const w=1.85,h=2.65,r=.11,shape=new THREE.Shape();shape.moveTo(-w/2+r,-h/2);shape.lineTo(w/2-r,-h/2);shape.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);shape.lineTo(w/2,h/2-r);shape.quadraticCurveTo(w/2,h/2,w/2-r,h/2);shape.lineTo(-w/2+r,h/2);shape.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);shape.lineTo(-w/2,-h/2+r);shape.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);
  const geometry=new THREE.ExtrudeGeometry(shape,{depth:.035,bevelEnabled:true,bevelSegments:2,bevelSize:.012,bevelThickness:.008,curveSegments:8});
  const plane=new THREE.PlaneGeometry(w-.04,h-.04),side=new THREE.MeshStandardMaterial({color:0xf3eede,roughness:.8});
- const backTexture=cardTexture(category,true),frontTexture=cardTexture(category,false);
+ const backTexture=cardTexture(category,true),frontTexture=cardTexture(category,false,()=>{if(alive)pose(finished?3.4:elapsed);});
  const back=new THREE.MeshStandardMaterial({map:backTexture,roughness:.85}),front=new THREE.MeshStandardMaterial({map:frontTexture,roughness:.85});
  const cards=Array.from({length:12},(_,i)=>{const group=new THREE.Group();const body=new THREE.Mesh(geometry,side);body.castShadow=true;group.add(body);const f=new THREE.Mesh(plane,i===11?front:back);f.position.z=.047;group.add(f);const b=new THREE.Mesh(plane,back);b.position.z=-.017;b.rotation.y=Math.PI;group.add(b);scene.add(group);return group;});
  let frame=0,alive=true,finished=false,elapsed=0,last=null,spread=1;
@@ -43,19 +44,21 @@ export function createCategoryDraw(host,category,{revealed=false,onComplete=()=>
  if(revealed||reduced())queueMicrotask(finish);else frame=requestAnimationFrame(tick);
  return {skip:finish,destroy(){alive=false;cancelAnimationFrame(frame);observer.disconnect();renderer.domElement.removeEventListener('webglcontextlost',contextLost);geometry.dispose();plane.dispose();side.dispose();front.dispose();back.dispose();frontTexture.dispose();backTexture.dispose();shadow.geometry.dispose();shadow.material.dispose();light.shadow.map?.dispose();renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();}};
 }
-function cardTexture(category,isBack){
+function cardTexture(category,isBack,onUpdate=()=>{}){
  const canvas=document.createElement('canvas');canvas.width=600;canvas.height=860;const c=canvas.getContext('2d');
  c.fillStyle=isBack?'#dce59c':'#f5f1e5';c.fillRect(0,0,600,860);c.strokeStyle=isBack?'#758d5d':'#b8bfa5';c.lineWidth=2;c.strokeRect(23,23,554,814);c.strokeRect(34,34,532,792);
  if(isBack){c.save();c.beginPath();c.rect(46,46,508,768);c.clip();c.strokeStyle='#9eaf78';c.lineWidth=1;for(let n=-850;n<650;n+=26){c.beginPath();c.moveTo(n,0);c.lineTo(n+860,860);c.stroke();c.beginPath();c.moveTo(n+860,0);c.lineTo(n,860);c.stroke();}c.restore();c.fillStyle='#dce59c';c.fillRect(90,277,420,305);c.strokeStyle='#34563d';c.strokeRect(104,291,392,277);c.textAlign='center';c.fillStyle='#244336';c.font='italic 130px Georgia,serif';c.fillText('1—5',300,443);c.font='600 18px sans-serif';c.fillText('CATEGORY',300,510);}
  else{c.fillStyle='#244336';c.textAlign='left';c.font='600 19px sans-serif';c.fillText('BEST TO WORST',54,85);c.font='16px sans-serif';c.fillStyle='#718272';c.fillText('CATEGORY CARD',54,118);c.fillStyle='#e1e7ae';c.beginPath();c.arc(300,340,100,0,Math.PI*2);c.fill();c.textAlign='center';c.fillStyle='#34563d';c.font='italic 106px Georgia,serif';c.fillText('↗',300,377);c.font='700 46px sans-serif';const words=category.name.split(' '),lines=[];let line='';for(const word of words){if(line&&c.measureText(line+' '+word).width>490){lines.push(line);line=word;}else line=line?line+' '+word:word;}lines.push(line);lines.forEach((text,i)=>c.fillText(text,300,522+i*60,490));c.font='17px sans-serif';c.fillStyle='#718272';c.fillText(`${category.cards.length} cards`,300,715);c.font='600 16px sans-serif';c.fillText('THIS ROUND',300,781);}
- const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;return texture;
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;
+ if(!isBack&&categoryArt(category.id)){const img=new Image();img.onload=()=>{c.fillStyle='#f5f1e5';c.fillRect(55,150,490,340);c.drawImage(img,130,150,340,340);texture.needsUpdate=true;onUpdate();};img.src=categoryArt(category.id);}
+ return texture;
 }
 function flatDraw(host,category,{revealed,onComplete}){
  let alive=true,done=false,timer;
  const deck=document.createElement('div');deck.className='flat-category-deck';
  for(let i=0;i<5;i++){const card=document.createElement('div');card.className='flat-category-card';card.style.setProperty('--i',i);card.textContent='1—5';deck.append(card);}host.append(deck);
  const label=document.createElement('strong');label.textContent=category.name;const front=deck.lastElementChild;
- function finish(){if(!alive||done)return;done=true;clearTimeout(timer);deck.classList.remove('is-shuffling');deck.classList.add('is-drawn');front.replaceChildren(label);onComplete();}
+ function finish(){if(!alive||done)return;done=true;clearTimeout(timer);deck.classList.remove('is-shuffling');deck.classList.add('is-drawn');front.replaceChildren(label);if(categoryArt(category.id)){const img=document.createElement('img');img.src=categoryArt(category.id);img.alt='';img.className='flat-category-art';front.prepend(img);}onComplete();}
  if(revealed||reduced())queueMicrotask(finish);else{deck.classList.add('is-shuffling');timer=setTimeout(finish,2200);}
  return {skip:finish,destroy(){alive=false;clearTimeout(timer);deck.remove();}};
 }
