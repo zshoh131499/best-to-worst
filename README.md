@@ -18,6 +18,8 @@ Both sides predict the team's match rate. With predictions p and q and actual ma
 
 ## Features
 
+- Optional ranker notes after each round: explain a specific card or the overall ranking. Save, edit, remove, or cancel. Notes stay in this browser, are visible on the shared device, never affect scores, and are not sent to Sammy.
+
 - Three.js paper cards, shadows, animated reordering, and individual reveals.
 - Flat-card fallback when WebGL cannot initialize.
 - Default category draw each round: a Three.js packet cut, fan, and flip reveals a category. Accept it or choose another; skip animation is available. Reduced motion reveals immediately. The timer starts only when ranking begins.
